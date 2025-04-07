@@ -6,8 +6,11 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,6 +22,9 @@ import androidx.compose.ui.Modifier
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
+import org.json.JSONException
+import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
@@ -61,7 +67,13 @@ fun GUI(){
 
             }
 
+            TextField(value = keyword, onValueChange = { keyword = it })
+
         }
+        Text(
+            modifier = Modifier.verticalScroll(rememberScrollState()),
+            text = bookInfo
+        )
 
     }
 }
@@ -93,6 +105,32 @@ suspend fun fetchBooks(keyword:String):String{
 }
 
 fun parseJSON(stb:StringBuilder):String{
-    return ""
+
+    val json = JSONObject(stb.toString())
+
+    var allBooks = StringBuilder()
+
+    var jsonArray : JSONArray = json.getJSONArray("items")
+
+    for (i in 0..jsonArray.length()-1){
+        val book : JSONObject = jsonArray[i] as JSONObject
+
+        val volInfo = book["volumeInfo"] as JSONObject
+        val title = volInfo["title"] as String
+        allBooks.append("${i + 1}) \"$title\" ")
+
+        try {
+            val authors = volInfo["authors"] as JSONArray
+            allBooks.append("authors: ")
+            for (i in 0..authors.length() - 1)
+                allBooks.append(authors[i] as String + ", ")
+        }catch (jen:JSONException){
+
+        }
+
+        allBooks.append("\n\n")
+    }
+
+    return allBooks.toString()
 }
 
